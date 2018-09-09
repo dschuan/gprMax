@@ -73,9 +73,11 @@ def mpl_plot(filename, outputdata, dt, rxnumber, rxcomponent):
 if __name__ == "__main__":
 
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Plots a B-scan image.', usage='cd gprMax; python -m tools.plot_Bscan outputfile output')
+    parser = argparse.ArgumentParser(description='Plots a B-scan image.', usage='cd gprMax; python -m tools.plot_Bscan outputfile output [options]')
     parser.add_argument('outputfile', help='name of output file including path')
     parser.add_argument('rx_component', help='name of output component to be plotted', choices=['Ex', 'Ey', 'Ez', 'Hx', 'Hy', 'Hz', 'Ix', 'Iy', 'Iz'])
+    parser.add_argument('--save', help='indicates whether to save image', action='store_true')
+
     args = parser.parse_args()
 
     # Open output file and read number of outputs (receivers)
@@ -90,5 +92,8 @@ if __name__ == "__main__":
     for rx in range(1, nrx + 1):
         outputdata, dt = get_output_data(args.outputfile, rx, args.rx_component)
         plthandle = mpl_plot(args.outputfile, outputdata, dt, rx, args.rx_component)
-
-    plthandle.show()
+    if args.save is True:
+        pic_name = args.outputfile.replace('.out', '')
+        plthandle.savefig(pic_name + '.jpg')
+    else:
+        plthandle.show()

@@ -49,5 +49,4 @@ if filename ~= 0
     set(fh1,'PaperSize', [X Y])
     set(fh1,'PaperPosition', [xMargin yMargin xSize ySize])
     set(fh1,'PaperOrientation', 'portrait')
-
 end
