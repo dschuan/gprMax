@@ -95,5 +95,6 @@ if __name__ == "__main__":
     if args.save is True:
         pic_name = args.outputfile.replace('.out', '')
         plthandle.savefig(pic_name + '.jpg')
+    
     else:
         plthandle.show()

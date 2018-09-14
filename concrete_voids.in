@@ -1,0 +1,140 @@
+#title: Heterogeneous soil using a stochastic distribution of dielectric properties given by a mixing model from Peplinski
+#python:
+import os
+import sys
+import numpy as np
+from datetime import datetime
+import time
+import json
+from gprMax.input_cmd_funcs import *
+import random
+import glob
+import os
+import re
+import uuid
+
+
+#Params**********************************************
+#set to name of file
+name_of_output = 'concrete_voids'
+
+has_cylinder = True
+model_material = 'my_air'
+
+
+has_object = True
+
+
+step_size = 0.003
+#This is just a placeholder for number of scans for calculation purpose, does not actually change number of scans
+num_scans = 120
+#*****************************************************************
+
+
+#checks if string is an integer
+def RepresentsInt(s):
+    try:
+        int(s)
+        return True
+    except e:
+        return False
+
+#get random identifier from filename
+
+with open("./iden.json") as data_file:
+    data = json.load(data_file)
+
+random_seed = int(data["identifier"])
+random.seed(random_seed)
+
+
+identifier = str(random_seed)
+
+x_length = 0.5
+y_length = 0.1
+z_length = 0.001
+spatial_resolution = 0.001
+time_window_size = 6e-9
+
+domain(x_length, y_length, z_length)
+dx_dy_dz(spatial_resolution, spatial_resolution, spatial_resolution)
+time_window(time_window_size)
+
+#waveform specification
+wave_type = 'ricker'
+amplitude = 1
+centre_frequency = 1.5e9
+print('#waveform: {} {} {} {}'.format(wave_type,amplitude,centre_frequency, 'my_ricker'))
+
+#Excitation source (additive/soft source)
+
+source_rx_y_offset =  0.85
+source_rx_offset = 0.06
+polarisation = 'z'
+x_source = x_length/2 - num_scans*step_size/2 - source_rx_offset/2
+y_source = y_length * source_rx_y_offset
+z_source = 0
+print('#hertzian_dipole: {} {} {} {} {}'.format(polarisation, x_source, y_source, z_source, 'my_ricker'))
+
+#Receiver
+x_rx = x_length/2 - num_scans*step_size/2 + source_rx_offset/2
+y_rx = y_source
+z_rx = z_source
+print('#rx: {} {} {}'.format(x_rx, y_rx, z_rx))
+
+print('#src_steps: {} {} {}'.format(step_size,0,0))
+print('#rx_steps: {} {} {}'.format(step_size,0,0))
+
+
+#concrete permittivity = 4.5, conductivity ~ 0.001 https://www.ndt.net/article/ndtce03/papers/v078/v078.htm
+material(4.5, 0.001, 1, 0, 'my_concrete')
+
+#void air
+material(1, 0.000000009, 1, 0, 'my_air')
+
+#void water
+material( 80.10, 0.05, 1, 0, 'my_water')
+
+
+#soil material
+sand_fraction = 0.5
+clay_fraction = 0.5
+soil_bulk_density = 2.0
+sand_density = 2.66
+water_fraction_low = 0.001
+water_fraction_high = 0.25
+print('#soil_peplinski: {} {} {} {} {} {} {}'.format(sand_fraction, clay_fraction, soil_bulk_density, sand_density, water_fraction_low, water_fraction_high, 'my_soil'))
+
+#soil model with add_surface_roughnes
+model_height = 0.7 * y_length
+fractal_dimension = 1.5
+x_fractal = 1
+y_fractal = 1
+z_fractal = 1
+num_materials = 1
+print('#fractal_box: {} {} {} {} {} {} {} {} {} {} {} {} {} {}'.format(0, 0, 0, x_length, model_height, z_length, fractal_dimension, x_fractal, y_fractal, z_fractal, num_materials,'my_concrete', 'my_model_box', random_seed))
+
+fractal_dimension_roughness = 1
+weight_one = 1
+weight_two = 1
+upper_limit = 0.065
+lower_limit = 0.08
+
+print('#add_surface_roughness: {} {} {} {} {} {} {} {} {} {} {} {} {}'.format(0, model_height, 0, x_length, model_height, z_length, fractal_dimension_roughness, weight_one, weight_two, upper_limit, lower_limit, 'my_model_box', random_seed))
+
+random_cylinder_offset_x = random.random()* 0.25
+cylinder_x_offset = 0.375 + random_cylinder_offset_x
+cylinder_radius = 0.01
+random_cylinder_offset_y = random.random()* 0.01
+cylinder_y_pos = 0.045 - random_cylinder_offset_y
+
+if has_cylinder:
+  cylinder(x_length*cylinder_x_offset, cylinder_y_pos, 0, x_length*cylinder_x_offset, cylinder_y_pos, z_length, cylinder_radius, model_material)
+
+if(os.path.exists('./user_models/' + identifier + name_of_output + '1.out')):
+  print('existing iteration, no geometry printed')
+else:
+  geometry_view(0, 0, 0, x_length, y_length, z_length, spatial_resolution, spatial_resolution, spatial_resolution, identifier + name_of_output, 'n')
+
+
+#end_python:

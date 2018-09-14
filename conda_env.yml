@@ -18,3 +18,4 @@ dependencies:
 #  - pycuda
   - terminaltables
   - tqdm
+  - pillow
