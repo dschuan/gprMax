@@ -16,8 +16,8 @@ import uuid
 
 #Params**********************************************
 #set to name of file
-name_of_output = 'concrete_voids'
 
+name_of_output = 'concrete_voids'
 has_cylinder = True
 model_material = 'my_air'
 
@@ -45,6 +45,7 @@ with open("./iden.json") as data_file:
     data = json.load(data_file)
 
 random_seed = int(data["identifier"])
+name_of_output = str(random_seed) + name_of_output
 random.seed(random_seed)
 
 
@@ -128,10 +129,21 @@ cylinder_radius = 0.01
 random_cylinder_offset_y = random.random()* 0.01
 cylinder_y_pos = 0.045 - random_cylinder_offset_y
 
-if has_cylinder:
-  cylinder(x_length*cylinder_x_offset, cylinder_y_pos, 0, x_length*cylinder_x_offset, cylinder_y_pos, z_length, cylinder_radius, model_material)
+crack_length = 0.25* x_length
+crack_thickness = 0.005
+random_crack_offset = random.random()*0.025
+start_choices_x = np.arange(0.3, 0.7, 0.05).tolist()
+start_choices_y = np.arange(0.1, 0.6, 0.05).tolist()
+crack_start_x = x_length * random.choice(start_choices_x)
+crack_start_y = model_height * random.choice(start_choices_y)
+crack_start_z = 0
+#box(0.2, 0.02, 0, 0.3, 0.02 + crack_thickness, 0.001, model_material, 'n')
 
-if(os.path.exists('./user_models/' + identifier + name_of_output + '1.out')):
+if has_cylinder:
+  box(crack_start_x, crack_start_y, 0, crack_start_x + crack_length, crack_start_y + crack_thickness, crack_start_z + 0.001, model_material, 'n')
+
+
+if(os.path.exists('./user_models/' + name_of_output + '1.out')):
   print('existing iteration, no geometry printed')
 else:
   geometry_view(0, 0, 0, x_length, y_length, z_length, spatial_resolution, spatial_resolution, spatial_resolution, identifier + name_of_output, 'n')
